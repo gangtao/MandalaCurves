@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Mandala Curves</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient-start: #4a4a4a;
+            --bg-gradient-end: #3a3a3a;
+            --header-bg: rgba(0, 0, 0, 0.2);
+            --header-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #e0e0e0;
+            --text-secondary: white;
+            --canvas-bg: #1a1a1a;
+            --canvas-border: #333;
+            --box-bg: #2a2a2a;
+            --control-item-bg: #333;
+            --control-item-border: #444;
+            --slider-bg: #4a4a4a;
+            --slider-thumb: #d0d0d0;
+            --badge-bg: #666;
+            --badge-text: white;
+            --icon-color: #aaa;
+            --info-bg: #2a2a2a;
+            --info-border: #444;
+            --scrollbar-track: rgba(255, 255, 255, 0.1);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.3);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+        }
+        
+        [data-theme="light"] {
+            --bg-gradient-start: #e8e8e8;
+            --bg-gradient-end: #f5f5f5;
+            --header-bg: rgba(255, 255, 255, 0.5);
+            --header-border: rgba(0, 0, 0, 0.1);
+            --text-primary: #363636;
+            --text-secondary: #363636;
+            --canvas-bg: #ffffff;
+            --canvas-border: #d0d0d0;
+            --box-bg: white;
+            --control-item-bg: #fafafa;
+            --control-item-border: #d0d0d0;
+            --slider-bg: #ccc;
+            --slider-thumb: #666;
+            --badge-bg: #999;
+            --badge-text: white;
+            --icon-color: #666;
+            --info-bg: white;
+            --info-border: #d0d0d0;
+            --scrollbar-track: rgba(0, 0, 0, 0.05);
+            --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+            --scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+        
+        .main-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--header-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .header .title-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .header-title {
+            margin: 0;
+            padding: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+        
+        .header-subtitle {
+            margin: 0;
+            padding: 0;
+            font-size: 0.85rem;
+            font-weight: 400;
+            opacity: 0.9;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+        
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        [data-theme="light"] .theme-toggle {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            padding: 1rem;
+            overflow: hidden;
+        }
+        
+        .columns {
+            height: 100%;
+        }
+        
+        .canvas-column {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .canvas-box {
+            background: var(--canvas-bg);
+            border-radius: 12px;
+            padding: 15px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--canvas-border);
+            transition: all 0.3s ease;
+        }
+        
+        svg {
+            border-radius: 8px;
+        }
+        
+        .controls-column {
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        
+        .box {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: var(--box-bg);
+            transition: all 0.3s ease;
+        }
+        
+        .control-label {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+        
+        .value-badge {
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: var(--slider-bg);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+        }
+        
+        .preset-btn {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.5rem;
+            height: auto;
+        }
+        
+        .button.is-light:hover {
+            background-color: #e0e0e0;
+            border-color: #999;
+        }
+        
+        /* Dark mode button styling */
+        :root .button.is-light {
+            background-color: #444;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+        
+        :root .button.is-light:hover {
+            background-color: #555;
+            border-color: #666;
+        }
+        
+        /* Light mode button styling */
+        [data-theme="light"] .button.is-light {
+            background-color: #f5f5f5;
+            border-color: #dbdbdb;
+            color: #363636;
+        }
+        
+        [data-theme="light"] .button.is-light:hover {
+            background-color: #e0e0e0;
+            border-color: #999;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        /* Checkbox styling for dark mode */
+        :root .checkbox-label input[type="checkbox"] {
+            filter: brightness(0.8);
+        }
+        
+        [data-theme="light"] .checkbox-label input[type="checkbox"] {
+            filter: none;
+        }
+        
+        .continuous-mode-wrapper {
+            background: var(--control-item-bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--control-item-border);
+            transition: all 0.3s ease;
+        }
+        
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-buttons .button {
+            flex: 1;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+        }
+        
+        .info-box {
+            font-size: 0.8rem;
+            padding: 0.75rem;
+            border: 1px solid var(--info-border);
+            background: var(--info-bg);
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+        
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .control-item {
+            background: var(--control-item-bg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--control-item-border);
+            transition: all 0.3s ease;
+        }
+        
+        /* Scrollbar styling */
+        .controls-column::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .controls-column::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 3px;
+        }
+        
+        .controls-column::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+        
+        .controls-column::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+        
+        /* Font Awesome icon styling */
+        .button .icon {
+            margin-right: 0.25rem;
+        }
+        
+        .button .icon i {
+            color: inherit;
+        }
+        
+        .section-title i {
+            margin-right: 0.5rem;
+            color: var(--icon-color);
+        }
+        
+        .info-box i {
+            color: var(--icon-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Compact Header -->
+        <div class="header">
+            <div style="width: 40px;"></div>
+            <div class="title-wrapper">
+                <h1 class="header-title">
+                    <i class="fas fa-spa"></i> Mandala Curves <i class="fas fa-spa"></i>
+                </h1>
+                <p class="header-subtitle">Planetary Orbital Patterns</p>
+            </div>
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-wrapper">
+            <div class="columns is-gapless" style="height: 100%;">
+                <!-- Canvas Column -->
+                <div class="column is-7 canvas-column">
+                    <div class="canvas-box">
+                        <svg id="canvas"></svg>
+                    </div>
+                </div>
+
+                <!-- Controls Column -->
+                <div class="column is-5 controls-column">
+                    <!-- Preset Patterns -->
+                    <div class="box">
+                        <div class="section-title"><i class="fas fa-star"></i> Presets</div>
+                        <div class="preset-grid">
+                            <button class="button is-light is-small preset-btn" data-v1="15" data-v2="50">
+                                <i class="fas fa-dharmachakra"></i> 7-Petal
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="20" data-v2="50">
+                                <i class="fas fa-leaf"></i> Clover
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="30" data-v2="50">
+                                <i class="fas fa-heart"></i> Hearts
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="35" data-v2="50">
+                                <i class="fas fa-leaf"></i> Small
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="40" data-v2="50">
+                                <i class="fas fa-heart"></i> Heart
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="10" data-v2="50">
+                                <i class="fas fa-star"></i> Star
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="17" data-v2="50">
+                                <i class="fas fa-circle-notch"></i> Spiral
+                            </button>
+                            <button class="button is-light is-small preset-btn" data-v1="23" data-v2="50">
+                                <i class="fas fa-sitemap"></i> Web
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="box">
+                        <div class="section-title"><i class="fas fa-sliders-h"></i> Parameters</div>
+                        <div class="control-grid">
+                            <div class="control-item">
+                                <div class="control-label">
+                                    <span>Speed v1</span>
+                                    <span class="value-badge" id="v1-value">15</span>
+                                </div>
+                                <input type="range" id="v1" min="1" max="100" value="15" step="1">
+                            </div>
+                            
+                            <div class="control-item">
+                                <div class="control-label">
+                                    <span>Speed v2</span>
+                                    <span class="value-badge" id="v2-value">50</span>
+                                </div>
+                                <input type="range" id="v2" min="1" max="100" value="50" step="1">
+                            </div>
+                            
+                            <div class="control-item">
+                                <div class="control-label">
+                                    <span>Animation</span>
+                                    <span class="value-badge" id="speed-value">1.0x</span>
+                                </div>
+                                <input type="range" id="speed" min="0.1" max="3" value="1" step="0.1">
+                            </div>
+                            
+                            <div class="control-item">
+                                <div class="control-label">
+                                    <span>Line Width</span>
+                                    <span class="value-badge" id="width-value">1.5</span>
+                                </div>
+                                <input type="range" id="lineWidth" min="0.5" max="5" value="1.5" step="0.1">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 continuous-mode-wrapper">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="continuousMode">
+                                <span><i class="fas fa-redo"></i> Continuous Mode (×5 longer)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="box">
+                        <div class="section-title"><i class="fas fa-bolt"></i> Actions</div>
+                        <div class="action-buttons">
+                            <button class="button is-light" id="animateBtn">
+                                <span class="icon"><i class="fas fa-play"></i></span>
+                                <span>Animate</span>
+                            </button>
+                            <button class="button is-light" id="drawBtn">
+                                <span class="icon"><i class="fas fa-bolt"></i></span>
+                                <span>Draw</span>
+                            </button>
+                            <button class="button is-light" id="clearBtn">
+                                <span class="icon"><i class="fas fa-trash"></i></span>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="box info-box">
+                        <strong><i class="fas fa-lightbulb"></i> Tip:</strong> Different speed ratios (v1/v2) create different patterns. 
+                        Enable continuous mode for spirals that never fully close!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for d3 to load
+        if (typeof d3 === 'undefined') {
+            document.body.innerHTML = '<section class="hero is-danger is-fullheight"><div class="hero-body"><div class="container has-text-centered"><h1 class="title">Loading D3.js...</h1><p class="subtitle">If this message persists, there may be a network issue.</p></div></div></section>';
+            setTimeout(() => location.reload(), 2000);
+        }
+        
+        // Initialize variables
+        let animationTimer = null;
+        let currentColorIndex = 0;
+        
+        const width = 550;
+        const height = 550;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) / 2 - 25;
+        
+        const svg = d3.select("#canvas")
+            .attr("width", width)
+            .attr("height", height);
+        
+        // Create gradient definitions
+        const defs = svg.append("defs");
+        
+        const gradient1 = defs.append("linearGradient")
+            .attr("id", "gradient1")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "100%");
+        
+        gradient1.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", "#667eea");
+        
+        gradient1.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#764ba2");
+        
+        const gradient2 = defs.append("linearGradient")
+            .attr("id", "gradient2")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "100%");
+        
+        gradient2.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", "#f093fb");
+        
+        gradient2.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#f5576c");
+        
+        const gradient3 = defs.append("linearGradient")
+            .attr("id", "gradient3")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "100%");
+        
+        gradient3.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", "#4facfe");
+        
+        gradient3.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#00f2fe");
+        
+        const colors = ["url(#gradient1)", "url(#gradient2)", "url(#gradient3)", "#FF6B6B", "#4ECDC4", "#45B7D1"];
+        
+        // Update value displays
+        function updateValueDisplays() {
+            document.getElementById('v1-value').textContent = document.getElementById('v1').value;
+            document.getElementById('v2-value').textContent = document.getElementById('v2').value;
+            document.getElementById('speed-value').textContent = parseFloat(document.getElementById('speed').value).toFixed(1) + 'x';
+            document.getElementById('width-value').textContent = parseFloat(document.getElementById('lineWidth').value).toFixed(1);
+        }
+        
+        document.getElementById('v1').addEventListener('input', updateValueDisplays);
+        document.getElementById('v2').addEventListener('input', updateValueDisplays);
+        document.getElementById('speed').addEventListener('input', updateValueDisplays);
+        document.getElementById('lineWidth').addEventListener('input', updateValueDisplays);
+        
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+        
+        function calculatePoints(v1, v2, numPoints = 3000) {
+            const points = [];
+            const ratio = v1 / v2;
+            const g = gcd(v1, v2);
+            const cycles = v2 / g;
+            
+            // Check if continuous mode is enabled
+            const continuousMode = document.getElementById('continuousMode').checked;
+            const multiplier = continuousMode ? 5 : 1;
+            
+            const maxT = cycles * 2 * Math.PI * multiplier;
+            const totalPoints = numPoints * multiplier;
+            
+            const r1 = maxRadius * 0.6;  // Increased from 0.3
+            const r2 = maxRadius * 0.3;  // Increased from 0.15
+            
+            for (let i = 0; i <= totalPoints; i++) {
+                const t = (i / totalPoints) * maxT;
+                const x = centerX + r1 * Math.cos(ratio * t) + r2 * Math.cos(t);
+                const y = centerY + r1 * Math.sin(ratio * t) + r2 * Math.sin(t);
+                points.push([x, y]);
+            }
+            
+            return points;
+        }
+        
+        function clearCanvas() {
+            if (animationTimer) {
+                animationTimer.stop();
+                animationTimer = null;
+            }
+            svg.selectAll("path.curve").remove();
+            svg.selectAll("circle.orbit").remove();
+            svg.selectAll("circle.point").remove();
+        }
+        
+        function setPreset(v1, v2) {
+            document.getElementById('v1').value = v1;
+            document.getElementById('v2').value = v2;
+            updateValueDisplays();
+            clearCanvas();
+            startAnimation();
+        }
+        
+        function drawComplete() {
+            clearCanvas();
+            
+            const v1 = parseInt(document.getElementById('v1').value);
+            const v2 = parseInt(document.getElementById('v2').value);
+            const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+            
+            const points = calculatePoints(v1, v2);
+            const line = d3.line()
+                .x(d => d[0])
+                .y(d => d[1])
+                .curve(d3.curveCardinal.tension(0));
+            
+            svg.append("path")
+                .datum(points)
+                .attr("class", "curve")
+                .attr("d", line)
+                .attr("fill", "none")
+                .attr("stroke", colors[currentColorIndex % colors.length])
+                .attr("stroke-width", lineWidth)
+                .attr("opacity", 0.8);
+            
+            currentColorIndex++;
+        }
+        
+        function startAnimation() {
+            clearCanvas();
+            
+            const v1 = parseInt(document.getElementById('v1').value);
+            const v2 = parseInt(document.getElementById('v2').value);
+            const speed = parseFloat(document.getElementById('speed').value);
+            const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+            const continuousMode = document.getElementById('continuousMode').checked;
+            
+            const allPoints = calculatePoints(v1, v2);
+            const baseDuration = 5000 / speed;
+            const duration = continuousMode ? baseDuration * 5 : baseDuration;
+            
+            const path = svg.append("path")
+                .attr("class", "curve")
+                .attr("fill", "none")
+                .attr("stroke", colors[currentColorIndex % colors.length])
+                .attr("stroke-width", lineWidth)
+                .attr("opacity", 0.8);
+            
+            currentColorIndex++;
+            
+            // Add animated circles showing the orbit
+            const r1 = maxRadius * 0.6;  // Increased from 0.3
+            const r2 = maxRadius * 0.3;  // Increased from 0.15
+            
+            // Get orbit color based on theme
+            const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+            const orbitColor = isLightMode ? '#333' : 'white';
+            
+            const orbit1 = svg.append("circle")
+                .attr("class", "orbit")
+                .attr("cx", centerX)
+                .attr("cy", centerY)
+                .attr("r", r1)
+                .attr("fill", "none")
+                .attr("stroke", orbitColor)
+                .attr("stroke-width", 1)
+                .attr("opacity", 0.3);
+            
+            const orbit2 = svg.append("circle")
+                .attr("class", "orbit")
+                .attr("r", r2)
+                .attr("fill", "none")
+                .attr("stroke", orbitColor)
+                .attr("stroke-width", 1)
+                .attr("opacity", 0.3);
+            
+            const point1 = svg.append("circle")
+                .attr("class", "point")
+                .attr("r", 4)
+                .attr("fill", "orange")
+                .attr("opacity", 0.8);
+            
+            const point2 = svg.append("circle")
+                .attr("class", "point")
+                .attr("r", 3)
+                .attr("fill", "red")
+                .attr("opacity", 1);
+            
+            let currentPoints = [];
+            let currentIndex = 0;
+            
+            const line = d3.line()
+                .x(d => d[0])
+                .y(d => d[1])
+                .curve(d3.curveCardinal.tension(0));
+            
+            animationTimer = d3.timer((elapsed) => {
+                const t = (elapsed / duration) * allPoints.length;
+                currentIndex = Math.min(Math.floor(t), allPoints.length - 1);
+                
+                if (currentIndex >= allPoints.length - 1) {
+                    animationTimer.stop();
+                    orbit1.remove();
+                    orbit2.remove();
+                    point1.remove();
+                    point2.remove();
+                    return;
+                }
+                
+                currentPoints = allPoints.slice(0, currentIndex + 1);
+                
+                path.datum(currentPoints)
+                    .attr("d", line);
+                
+                // Update orbit positions
+                const ratio = v1 / v2;
+                const g = gcd(v1, v2);
+                const cycles = v2 / g;
+                const multiplier = continuousMode ? 5 : 1;
+                const angle = (elapsed / duration) * 2 * Math.PI * cycles * multiplier;
+                
+                const x1 = centerX + r1 * Math.cos(ratio * angle);
+                const y1 = centerY + r1 * Math.sin(ratio * angle);
+                
+                orbit2.attr("cx", x1)
+                      .attr("cy", y1);
+                
+                point1.attr("cx", x1)
+                      .attr("cy", y1);
+                
+                point2.attr("cx", allPoints[currentIndex][0])
+                      .attr("cy", allPoints[currentIndex][1]);
+            });
+        }
+        
+        // Event listeners for buttons
+        document.getElementById('animateBtn').addEventListener('click', startAnimation);
+        document.getElementById('drawBtn').addEventListener('click', drawComplete);
+        document.getElementById('clearBtn').addEventListener('click', clearCanvas);
+        
+        // Event listeners for preset buttons
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const v1 = parseInt(this.dataset.v1);
+                const v2 = parseInt(this.dataset.v2);
+                setPreset(v1, v2);
+            });
+        });
+        
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlElement = document.documentElement;
+        
+        // Load saved theme or default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            htmlElement.setAttribute('data-theme', 'light');
+            themeIcon.className = 'fas fa-sun';
+        }
+        
+        // Theme toggle handler
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            if (newTheme === 'light') {
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+            }
+        });
+        
+        // Initial draw
+        setTimeout(() => {
+            drawComplete();
+        }, 100);
+    </script>
+</body>
+</html>
