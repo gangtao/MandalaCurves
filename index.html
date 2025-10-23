@@ -311,6 +311,10 @@
             transition: all 0.3s ease;
         }
         
+        .mt-3 {
+            margin-top: 0.75rem;
+        }
+        
         .section-title {
             font-size: 1rem;
             font-weight: 700;
@@ -492,6 +496,13 @@
                                 <span><i class="fas fa-redo"></i> Continuous Mode (×5 longer)</span>
                             </label>
                         </div>
+                        
+                        <div class="mt-3 continuous-mode-wrapper">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showConnectingLine" checked>
+                                <span><i class="fas fa-link"></i> Show Connecting Line</span>
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Action Buttons -->
@@ -645,6 +656,7 @@
             svg.selectAll("path.curve").remove();
             svg.selectAll("circle.orbit").remove();
             svg.selectAll("circle.point").remove();
+            svg.selectAll("g.connecting-lines-group").remove();
         }
         
         function setPreset(v1, v2) {
@@ -661,6 +673,7 @@
             const v1 = parseInt(document.getElementById('v1').value);
             const v2 = parseInt(document.getElementById('v2').value);
             const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+            const showConnectingLine = document.getElementById('showConnectingLine').checked;
             
             const points = calculatePoints(v1, v2);
             const line = d3.line()
@@ -668,6 +681,38 @@
                 .y(d => d[1])
                 .curve(d3.curveCardinal.tension(0));
             
+            // Draw connecting lines first if enabled
+            if (showConnectingLine) {
+                const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+                const connectingLineColor = isLightMode ? '#FF3366' : '#00FFFF';
+                const connectingLinesGroup = svg.append("g")
+                    .attr("class", "connecting-lines-group");
+                
+                const r1 = maxRadius * 0.6;
+                const ratio = v1 / v2;
+                const g = gcd(v1, v2);
+                const cycles = v2 / g;
+                const continuousMode = document.getElementById('continuousMode').checked;
+                const multiplier = continuousMode ? 5 : 1;
+                
+                // Draw connecting lines at intervals
+                for (let i = 0; i < points.length; i += 10) {
+                    const t = (i / points.length) * cycles * 2 * Math.PI * multiplier;
+                    const x1 = centerX + r1 * Math.cos(ratio * t);
+                    const y1 = centerY + r1 * Math.sin(ratio * t);
+                    
+                    connectingLinesGroup.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", points[i][0])
+                        .attr("y2", points[i][1])
+                        .attr("stroke", connectingLineColor)
+                        .attr("stroke-width", 0.5)
+                        .attr("opacity", 0.3);
+                }
+            }
+            
+            // Draw the main curve on top
             svg.append("path")
                 .datum(points)
                 .attr("class", "curve")
@@ -700,6 +745,15 @@
                 .attr("stroke-width", lineWidth)
                 .attr("opacity", 0.8);
             
+            // Get theme mode for colors
+            const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+            
+            // Create a group for connecting lines if enabled
+            const showConnectingLine = document.getElementById('showConnectingLine').checked;
+            const connectingLineColor = isLightMode ? '#FF3366' : '#00FFFF';
+            const connectingLinesGroup = showConnectingLine ? svg.append("g")
+                .attr("class", "connecting-lines-group") : null;
+            
             currentColorIndex++;
             
             // Add animated circles showing the orbit
@@ -707,7 +761,6 @@
             const r2 = maxRadius * 0.3;  // Increased from 0.15
             
             // Get orbit color based on theme
-            const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
             const orbitColor = isLightMode ? '#333' : 'white';
             
             const orbit1 = svg.append("circle")
@@ -784,6 +837,18 @@
                 
                 point2.attr("cx", allPoints[currentIndex][0])
                       .attr("cy", allPoints[currentIndex][1]);
+                
+                // Draw connecting line at this step if enabled (every 5 steps for performance)
+                if (connectingLinesGroup && currentIndex % 5 === 0) {
+                    connectingLinesGroup.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", allPoints[currentIndex][0])
+                        .attr("y2", allPoints[currentIndex][1])
+                        .attr("stroke", connectingLineColor)
+                        .attr("stroke-width", 0.5)
+                        .attr("opacity", 0.3);
+                }
             });
         }
         
