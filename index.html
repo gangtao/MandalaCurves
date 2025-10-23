@@ -441,7 +441,7 @@
                             <button class="button is-light is-small preset-btn" data-v1="40" data-v2="50">
                                 <i class="fas fa-heart"></i> Heart
                             </button>
-                            <button class="button is-light is-small preset-btn" data-v1="10" data-v2="50">
+                            <button class="button is-light is-small preset-btn" data-v1="10" data-v2="60">
                                 <i class="fas fa-star"></i> Star
                             </button>
                             <button class="button is-light is-small preset-btn" data-v1="17" data-v2="50">
@@ -757,8 +757,9 @@
             currentColorIndex++;
             
             // Add animated circles showing the orbit
-            const r1 = maxRadius * 0.6;  // Increased from 0.3
-            const r2 = maxRadius * 0.3;  // Increased from 0.15
+            // TODO: make these configurable
+            const r1 = maxRadius * 0.6; 
+            const r2 = maxRadius * 0.3;
             
             // Get orbit color based on theme
             const orbitColor = isLightMode ? '#333' : 'white';
@@ -801,6 +802,9 @@
                 .y(d => d[1])
                 .curve(d3.curveCardinal.tension(0));
             
+            let lastLineAngle = 0;
+            const lineAngleStep = Math.PI / 36; // Draw a line every 5 degrees (adjust as needed)
+
             animationTimer = d3.timer((elapsed) => {
                 const t = (elapsed / duration) * allPoints.length;
                 currentIndex = Math.min(Math.floor(t), allPoints.length - 1);
@@ -830,16 +834,16 @@
                 const y1 = centerY + r1 * Math.sin(ratio * angle);
                 
                 orbit2.attr("cx", x1)
-                      .attr("cy", y1);
+                    .attr("cy", y1);
                 
                 point1.attr("cx", x1)
-                      .attr("cy", y1);
+                    .attr("cy", y1);
                 
                 point2.attr("cx", allPoints[currentIndex][0])
-                      .attr("cy", allPoints[currentIndex][1]);
+                    .attr("cy", allPoints[currentIndex][1]);
                 
-                // Draw connecting line at this step if enabled (every 5 steps for performance)
-                if (connectingLinesGroup && currentIndex % 5 === 0) {
+                // Draw connecting line at evenly spaced angles
+                if (connectingLinesGroup && angle >= lastLineAngle + lineAngleStep) {
                     connectingLinesGroup.append("line")
                         .attr("x1", x1)
                         .attr("y1", y1)
@@ -848,6 +852,8 @@
                         .attr("stroke", connectingLineColor)
                         .attr("stroke-width", 0.5)
                         .attr("opacity", 0.3);
+                    
+                    lastLineAngle = angle;
                 }
             });
         }
