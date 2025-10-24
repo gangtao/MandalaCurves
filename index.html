@@ -143,6 +143,97 @@
             background: rgba(0, 0, 0, 0.1);
         }
         
+        .share-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+        }
+        
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        [data-theme="light"] .share-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="light"] .share-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Share Modal Styles */
+        .modal-background {
+            background-color: rgba(10, 10, 10, .86);
+        }
+        
+        .modal-card {
+            background: var(--box-bg);
+        }
+        
+        .modal-card-head,
+        .modal-card-foot {
+            background-color: var(--control-item-bg);
+            border-color: var(--control-item-border);
+        }
+        
+        .modal-card-title {
+            color: var(--text-primary);
+        }
+        
+        .modal-card-body {
+            background: var(--box-bg);
+        }
+        
+        #embedCode {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            background: var(--canvas-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--control-item-border);
+            border-radius: 4px;
+            padding: 1rem;
+            min-height: 300px;
+            resize: vertical;
+            width: 100%;
+        }
+        
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #48c774;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
         .content-wrapper {
             flex: 1;
             padding: 1rem;
@@ -405,9 +496,14 @@
                 </h1>
                 <p class="header-subtitle">Planetary Orbital Patterns</p>
             </div>
-            <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
-                <i class="fas fa-moon" id="themeIcon"></i>
-            </button>
+            <div style="display: flex; align-items: center;">
+                <button class="share-btn" id="shareBtn" title="Share this configuration">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -899,10 +995,273 @@
             }
         });
         
+        // Generate embeddable code
+        function generateEmbedCode() {
+            const v1 = document.getElementById('v1').value;
+            const v2 = document.getElementById('v2').value;
+            const lineWidth = document.getElementById('lineWidth').value;
+            const continuousMode = document.getElementById('continuousMode').checked;
+            const showConnectingLine = document.getElementById('showConnectingLine').checked;
+            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const timestamp = Date.now();
+            
+            const embedCode = `<!-- Mandala Curve Embed (v1:${v1}, v2:${v2}) - Auto-animated -->
+<div id="mandala-embed-${timestamp}" style="display: inline-block;"></div>
+<script src="https://d3js.org/d3.v7.min.js"><\/script>
+<script>
+(function() {
+    const config = {
+        v1: ${v1},
+        v2: ${v2},
+        lineWidth: ${lineWidth},
+        continuousMode: ${continuousMode},
+        showConnectingLine: ${showConnectingLine},
+        theme: '${theme}',
+        width: 500,
+        height: 500,
+        speed: 1.0
+    };
+    
+    const containerId = 'mandala-embed-${timestamp}';
+    const width = config.width;
+    const height = config.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxRadius = Math.min(width, height) / 2 - 20;
+    
+    const bgColor = config.theme === 'light' ? '#ffffff' : '#1a1a1a';
+    const strokeColor = config.theme === 'light' ? '#4ECDC4' : '#FF6B6B';
+    const connectingLineColor = config.theme === 'light' ? '#FF3366' : '#00FFFF';
+    const orbitColor = config.theme === 'light' ? '#333' : 'white';
+    
+    const svg = d3.select('#' + containerId)
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .style('background', bgColor)
+        .style('border-radius', '8px');
+    
+    function gcd(a, b) {
+        return b === 0 ? a : gcd(b, a % b);
+    }
+    
+    function calculatePoints(v1, v2) {
+        const points = [];
+        const r1 = maxRadius * 0.6;
+        const r2 = maxRadius * 0.3;
+        const ratio = v1 / v2;
+        const g = gcd(v1, v2);
+        const cycles = v2 / g;
+        const multiplier = config.continuousMode ? 5 : 1;
+        const steps = 1000 * multiplier;
+        
+        for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * cycles * 2 * Math.PI * multiplier;
+            const x1 = r1 * Math.cos(ratio * t);
+            const y1 = r1 * Math.sin(ratio * t);
+            const x2 = x1 + r2 * Math.cos(t);
+            const y2 = y1 + r2 * Math.sin(t);
+            points.push([centerX + x2, centerY + y2]);
+        }
+        return points;
+    }
+    
+    function startAnimation() {
+        const allPoints = calculatePoints(config.v1, config.v2);
+        const baseDuration = 5000 / config.speed;
+        const duration = config.continuousMode ? baseDuration * 5 : baseDuration;
+        
+        const path = svg.append("path")
+            .attr("fill", "none")
+            .attr("stroke", strokeColor)
+            .attr("stroke-width", config.lineWidth)
+            .attr("opacity", 0.8);
+        
+        const connectingLinesGroup = config.showConnectingLine ? svg.append("g") : null;
+        
+        const r1 = maxRadius * 0.6;
+        const r2 = maxRadius * 0.3;
+        
+        const orbit1 = svg.append("circle")
+            .attr("cx", centerX)
+            .attr("cy", centerY)
+            .attr("r", r1)
+            .attr("fill", "none")
+            .attr("stroke", orbitColor)
+            .attr("stroke-width", 1)
+            .attr("opacity", 0.3);
+        
+        const orbit2 = svg.append("circle")
+            .attr("r", r2)
+            .attr("fill", "none")
+            .attr("stroke", orbitColor)
+            .attr("stroke-width", 1)
+            .attr("opacity", 0.3);
+        
+        const point1 = svg.append("circle")
+            .attr("r", 4)
+            .attr("fill", "orange")
+            .attr("opacity", 0.8);
+        
+        const point2 = svg.append("circle")
+            .attr("r", 3)
+            .attr("fill", "red")
+            .attr("opacity", 1);
+        
+        let currentIndex = 0;
+        const line = d3.line()
+            .x(d => d[0])
+            .y(d => d[1])
+            .curve(d3.curveCardinal.tension(0));
+        
+        let lastLineAngle = 0;
+        const lineAngleStep = Math.PI / 36;
+        
+        const animationTimer = d3.timer((elapsed) => {
+            const t = (elapsed / duration) * allPoints.length;
+            currentIndex = Math.min(Math.floor(t), allPoints.length - 1);
+            
+            if (currentIndex >= allPoints.length - 1) {
+                animationTimer.stop();
+                orbit1.remove();
+                orbit2.remove();
+                point1.remove();
+                point2.remove();
+                return;
+            }
+            
+            const currentPoints = allPoints.slice(0, currentIndex + 1);
+            path.datum(currentPoints).attr("d", line);
+            
+            const ratio = config.v1 / config.v2;
+            const g = gcd(config.v1, config.v2);
+            const cycles = config.v2 / g;
+            const multiplier = config.continuousMode ? 5 : 1;
+            const angle = (elapsed / duration) * 2 * Math.PI * cycles * multiplier;
+            
+            const x1 = centerX + r1 * Math.cos(ratio * angle);
+            const y1 = centerY + r1 * Math.sin(ratio * angle);
+            
+            orbit2.attr("cx", x1).attr("cy", y1);
+            point1.attr("cx", x1).attr("cy", y1);
+            point2.attr("cx", allPoints[currentIndex][0]).attr("cy", allPoints[currentIndex][1]);
+            
+            if (connectingLinesGroup && angle >= lastLineAngle + lineAngleStep) {
+                connectingLinesGroup.append("line")
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", allPoints[currentIndex][0])
+                    .attr("y2", allPoints[currentIndex][1])
+                    .attr("stroke", connectingLineColor)
+                    .attr("stroke-width", 0.5)
+                    .attr("opacity", 0.3);
+                lastLineAngle = angle;
+            }
+        });
+    }
+    
+    // Auto-start animation
+    startAnimation();
+})();
+<\/script>`;
+            
+            return embedCode;
+        }
+        
+        // Share button functionality - wait for DOM to load
+        window.addEventListener('load', function() {
+            document.getElementById('shareBtn').addEventListener('click', function() {
+                const embedCode = generateEmbedCode();
+                document.getElementById('embedCode').value = embedCode;
+                document.getElementById('shareModal').classList.add('is-active');
+            });
+            
+            // Modal close handlers
+            document.getElementById('closeModal').addEventListener('click', function() {
+                document.getElementById('shareModal').classList.remove('is-active');
+            });
+            
+            document.getElementById('cancelBtn').addEventListener('click', function() {
+                document.getElementById('shareModal').classList.remove('is-active');
+            });
+            
+            document.querySelector('#shareModal .modal-background').addEventListener('click', function() {
+                document.getElementById('shareModal').classList.remove('is-active');
+            });
+            
+            // Copy to clipboard functionality
+            document.getElementById('copyCodeBtn').addEventListener('click', function() {
+                const embedCode = document.getElementById('embedCode');
+                const textToCopy = embedCode.value;
+                
+                // Use modern Clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(textToCopy).then(function() {
+                        showCopyNotification();
+                    }).catch(function(err) {
+                        // Fallback to older method
+                        fallbackCopy(embedCode);
+                    });
+                } else {
+                    // Fallback for older browsers or non-secure contexts
+                    fallbackCopy(embedCode);
+                }
+            });
+            
+            function fallbackCopy(embedCode) {
+                embedCode.select();
+                embedCode.setSelectionRange(0, 99999); // For mobile devices
+                try {
+                    document.execCommand('copy');
+                    showCopyNotification();
+                } catch (err) {
+                    alert('Failed to copy. Please copy manually.');
+                }
+            }
+            
+            function showCopyNotification() {
+                const notification = document.createElement('div');
+                notification.className = 'copy-notification';
+                notification.innerHTML = '<i class="fas fa-check-circle"></i> Code copied to clipboard!';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            }
+        });
+        
         // Initial draw
         setTimeout(() => {
             drawComplete();
         }, 100);
     </script>
+    
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Share Mandala Configuration</p>
+                <button class="delete" aria-label="close" id="closeModal"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="content">
+                    <p style="color: var(--text-primary); margin-bottom: 1rem;">
+                        Copy the code below and paste it into any HTML page to embed this mandala pattern:
+                    </p>
+                    <textarea id="embedCode" readonly></textarea>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success" id="copyCodeBtn">
+                    <span class="icon"><i class="fas fa-copy"></i></span>
+                    <span>Copy to Clipboard</span>
+                </button>
+                <button class="button" id="cancelBtn">Cancel</button>
+            </footer>
+        </div>
+    </div>
 </body>
 </html>
