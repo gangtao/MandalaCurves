@@ -58,7 +58,7 @@ Try these combinations for interesting patterns:
 - **v1=15, v2=50**: Beautiful 7-petal flower
 - **v1=10, v2=50**: Perfect 5-pointed star
 - **v1=20, v2=50**: Classic clover shape
-- **v1=40, v2=50**: Single heart
+- **v1=40, v2=80**: Single heart
 - **v1=17, v2=50**: Never-ending spiral (use continuous mode!)
 - **v1=1, v2=100**: Simple circle
 - **v1=99, v2=100**: Nearly circular with tiny wobble
