@@ -2,6 +2,8 @@
 
 An interactive web visualization that generates stunning mandala patterns based on planetary orbital mechanics. Watch as mathematical curves transform into beautiful, symmetrical art!
 
+![7-petal](curve_7.gif)
+
 ## 🎨 How It Works
 
 These mandala patterns are created using **epicycloid mathematics** - the path traced by a point on a circle that rotates around another rotating circle. The ratio between the two rotation speeds (v1/v2) determines the final pattern:
