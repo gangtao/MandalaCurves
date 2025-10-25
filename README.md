@@ -4,7 +4,7 @@ An interactive web visualization that generates stunning mandala patterns based 
 
 ![sample](sample.gif)
 
-## 🎨 How It Works
+## How It Works
 
 These mandala patterns are created using **epicycloid mathematics** - the path traced by a point on a circle that rotates around another rotating circle. The ratio between the two rotation speeds (v1/v2) determines the final pattern:
 
@@ -30,13 +30,12 @@ These mandala patterns are created using **epicycloid mathematics** - the path t
 - Experiment with different v1/v2 combinations to discover new patterns
 - Use higher animation speeds to quickly preview patterns
 
-## 🛠️ Technologies Used
+## Technologies Stack
 
-- **D3.js v7**: For powerful SVG manipulation and animations
-- **Bulma CSS**: For clean, responsive UI components
-- **Font Awesome 5**: For beautiful icons
+- **D3.js v7**
+- **Bulma CSS**
 
-## 📐 Mathematics
+## Mathematics
 
 The curves are generated using the parametric equations:
 
@@ -51,7 +50,7 @@ Where:
 - `r2` = radius of the smaller orbit (30% of canvas)
 - `t` = time parameter from 0 to 2π × cycles
 
-## 🎯 Examples
+## Examples
 
 Try these combinations for interesting patterns:
 
@@ -63,7 +62,7 @@ Try these combinations for interesting patterns:
 - **v1=1, v2=100**: Simple circle
 - **v1=99, v2=100**: Nearly circular with tiny wobble
 
-## 🌟 Inspiration
+## Inspiration
 
 This project was inspired by the mathematical beauty of planetary orbital patterns and how simple rotation mechanics can create incredibly complex and beautiful designs. The same mathematics that governs celestial mechanics creates stunning visual art!
 
